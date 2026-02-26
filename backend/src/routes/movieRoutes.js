@@ -7,7 +7,7 @@ const movieCollections = require("../../data/moviecollection");
 // ── In-memory cache ──────────────────────────────────────────────────────────
 let collectionsCache = null;
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes — short so movie edits show up quickly
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const TMDB_TIMEOUT = 8000; // 8 s per request
@@ -115,8 +115,23 @@ router.get("/movie-collections", async (req, res) => {
     }
 });
 
-// Warm-up endpoint – called by the app on launch to wake Render from sleep
+// Warm-up endpoint
 router.get("/ping", (_req, res) => res.json({ ok: true }));
+
+// Cache-bust endpoint — clears & rebuilds the collections cache immediately
+router.get("/refresh", async (_req, res) => {
+    try {
+        console.log("[Refresh] Cache bust requested — rebuilding...");
+        collectionsCache = null;
+        cacheTimestamp = 0;
+        collectionsCache = await buildCollections();
+        cacheTimestamp = Date.now();
+        res.json({ ok: true, categories: Object.keys(collectionsCache).length });
+    } catch (err) {
+        console.error("[Refresh] Error:", err.message);
+        res.status(500).json({ ok: false, error: err.message });
+    }
+});
 
 // Search TMDB for movies/TV by title
 router.get("/search", async (req, res) => {

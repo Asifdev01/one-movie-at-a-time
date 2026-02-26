@@ -4,13 +4,11 @@ const axios = require("axios");
 const { getRecommendation } = require("../services/recommendationService");
 const movieCollections = require("../../data/moviecollection");
 
-// ── In-memory cache ──────────────────────────────────────────────────────────
 let collectionsCache = null;
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes — short so movie edits show up quickly
+const CACHE_TTL_MS = 2 * 60 * 1000;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const TMDB_TIMEOUT = 8000; // 8 s per request
+const TMDB_TIMEOUT = 8000;
 
 async function fetchTMDBItem(id, isTVCategory) {
     const firstEndpoint = isTVCategory ? "tv" : "movie";
@@ -57,7 +55,6 @@ function formatItem(data) {
 }
 
 async function buildCollections() {
-    // Fetch ALL categories in parallel
     const categoryEntries = await Promise.all(
         Object.entries(movieCollections).map(async ([category, ids]) => {
             const isTVCategory = /tv|series|anime|animation/i.test(category);
@@ -72,8 +69,6 @@ async function buildCollections() {
     );
     return Object.fromEntries(categoryEntries);
 }
-
-// ── Routes ───────────────────────────────────────────────────────────────────
 
 router.post("/recommend", async (req, res) => {
     try {
@@ -97,17 +92,11 @@ router.post("/recommend", async (req, res) => {
 router.get("/movie-collections", async (req, res) => {
     try {
         const now = Date.now();
-
-        // Serve from cache if fresh
         if (collectionsCache && (now - cacheTimestamp) < CACHE_TTL_MS) {
-            console.log("[Collections] Serving from cache ⚡");
             return res.json(collectionsCache);
         }
-
-        console.log("[Collections] Fetching fresh data from TMDB...");
         collectionsCache = await buildCollections();
         cacheTimestamp = Date.now();
-
         res.json(collectionsCache);
     } catch (error) {
         console.error(error);
@@ -115,31 +104,26 @@ router.get("/movie-collections", async (req, res) => {
     }
 });
 
-// Warm-up endpoint
 router.get("/ping", (_req, res) => res.json({ ok: true }));
 
-// Cache-bust endpoint — clears & rebuilds the collections cache immediately
 router.get("/refresh", async (_req, res) => {
     try {
-        console.log("[Refresh] Cache bust requested — rebuilding...");
         collectionsCache = null;
         cacheTimestamp = 0;
         collectionsCache = await buildCollections();
         cacheTimestamp = Date.now();
         res.json({ ok: true, categories: Object.keys(collectionsCache).length });
     } catch (err) {
-        console.error("[Refresh] Error:", err.message);
+        console.error(err.message);
         res.status(500).json({ ok: false, error: err.message });
     }
 });
 
-// Search TMDB for movies/TV by title
 router.get("/search", async (req, res) => {
     const query = (req.query.q || "").toString().trim();
     if (!query) return res.status(400).json({ message: "Query is required" });
 
     try {
-        // Search for both movies and TV shows
         const [moviesRes, tvRes] = await Promise.allSettled([
             axios.get("https://api.themoviedb.org/3/search/movie", {
                 params: { api_key: process.env.TMDB_API_KEY, query, language: "en-US", page: 1 },
@@ -161,7 +145,6 @@ router.get("/search", async (req, res) => {
         const combined = [...movieResults, ...tvResults];
         if (combined.length === 0) return res.json([]);
 
-        // Fetch detailed info (genres + trailer) for each result in parallel
         const detailed = await Promise.allSettled(
             combined.map(item => {
                 const type = item.title ? "movie" : "tv";
@@ -178,7 +161,7 @@ router.get("/search", async (req, res) => {
 
         res.json(results);
     } catch (err) {
-        console.error("[Search] Error:", err.message);
+        console.error(err.message);
         res.status(500).json({ message: "Search failed" });
     }
 });

@@ -2,38 +2,31 @@ const axios = require("axios");
 
 const TMDB_TIMEOUT = 8000;
 
-// ── TMDB Genre ID map ─────────────────────────────────────────────────────────
-// Maps the UI genre labels to TMDB genre IDs (can send multiple IDs as OR)
 const GENRE_TO_TMDB = {
-  Happy: 35,   // Comedy
-  Peace: 18,   // Drama
-  Sad: 18,   // Drama
-  Intense: 28,   // Action
-  Action: 28,   // Action
-  Dark: 27,   // Horror
-  Thriller: 53,   // Thriller
-  Suspense: 9648, // Mystery
-  Crime: 80,   // Crime
-  Calm: 10751,// Family
-  Journey: 12,   // Adventure
+  Happy: 35,
+  Peace: 18,
+  Sad: 18,
+  Intense: 28,
+  Action: 28,
+  Dark: 27,
+  Thriller: 53,
+  Suspense: 9648,
+  Crime: 80,
+  Calm: 10751,
+  Journey: 12,
 };
 
-// Fallback: if mood is given but no genres, use mood → genre
 const MOOD_FALLBACK = {
   Happy: 35,
   Sad: 18,
   Angry: 28,
   Normal: 35,
-  // legacy
   Intense: 28,
   Dark: 27,
 };
 
-// ── Service ───────────────────────────────────────────────────────────────────
-
 const getRecommendation = async (mood, time, platforms, exclude = [], genres = []) => {
   try {
-    // Build TMDB genre IDs from selected genres, fall back to mood
     let tmdbGenreIds = [];
     if (genres && genres.length > 0) {
       tmdbGenreIds = [...new Set(genres.map(g => GENRE_TO_TMDB[g]).filter(Boolean))];
@@ -48,12 +41,11 @@ const getRecommendation = async (mood, time, platforms, exclude = [], genres = [
       {
         params: {
           api_key: process.env.TMDB_API_KEY,
-          // TMDB accepts pipe-separated genre IDs for OR logic
           with_genres: tmdbGenreIds.join("|"),
           "vote_average.gte": 7,
           "vote_count.gte": 500,
           sort_by: "popularity.desc",
-          page: Math.floor(Math.random() * 3) + 1, // randomise across 3 pages
+          page: Math.floor(Math.random() * 3) + 1,
         },
         timeout: TMDB_TIMEOUT,
       }
@@ -62,7 +54,6 @@ const getRecommendation = async (mood, time, platforms, exclude = [], genres = [
     let movies = discoverRes.data.results || [];
     if (movies.length === 0) return null;
 
-    // Filter out already-shown movies
     if (exclude.length > 0) {
       movies = movies.filter(m => !exclude.includes(m.id));
     }
@@ -70,7 +61,6 @@ const getRecommendation = async (mood, time, platforms, exclude = [], genres = [
 
     const selected = movies[Math.floor(Math.random() * movies.length)];
 
-    // Fetch full details + trailer
     try {
       const detailRes = await axios.get(
         `https://api.themoviedb.org/3/movie/${selected.id}`,
@@ -100,7 +90,6 @@ const getRecommendation = async (mood, time, platforms, exclude = [], genres = [
       };
 
     } catch (detailErr) {
-      console.error("Detail fetch failed:", detailErr.message);
       return {
         id: selected.id,
         title: selected.title,
@@ -114,7 +103,7 @@ const getRecommendation = async (mood, time, platforms, exclude = [], genres = [
     }
 
   } catch (error) {
-    console.error("Dynamic TMDB error:", error.message);
+    console.error("Recommendation error:", error.message);
     return null;
   }
 };

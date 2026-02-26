@@ -8,8 +8,6 @@ import { useRouter } from 'expo-router'
 import { Image } from 'expo-image'
 import axios from 'axios'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface Movie {
     id: number;
     title: string;
@@ -25,16 +23,11 @@ interface Collections {
     [key: string]: Movie[];
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** absoluteCinema → Absolute Cinema */
 const formatCategory = (key: string) =>
     key
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, c => c.toUpperCase())
         .trim();
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 const MovieItem = memo(({ movie, onPress }: { movie: Movie; onPress: (m: Movie) => void }) => (
     <TouchableOpacity style={styles.movieCard} onPress={() => onPress(movie)}>
@@ -85,8 +78,6 @@ const CategoryList = memo(({ category, movies, onMoviePress, onCategoryPress }: 
     );
 });
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
-
 export default function DevChoice() {
     const router = useRouter();
     const [collections, setCollections] = useState<Collections>({});
@@ -109,7 +100,6 @@ export default function DevChoice() {
                 setCollections(data);
             }
         } catch (err: any) {
-            console.error('[DevChoice] Fetch error:', err.message);
             setError('Failed to load picks. Check your connection.');
         } finally {
             setLoading(false);
@@ -132,20 +122,16 @@ export default function DevChoice() {
         });
     }, [router]);
 
-    // Local category filter — no API calls
     const filteredCategories = Object.keys(collections).filter(key =>
         formatCategory(key).toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // When searching: flatten all movies from matched categories into a single grid list
-    // Each item carries its category label for section headers
     const gridItems = searchQuery.length > 0
         ? filteredCategories.flatMap(cat =>
             (collections[cat] || [])
-                .filter((m, i, arr) => arr.findIndex(x => x.id === m.id) === i) // dedup within category
+                .filter((m, i, arr) => arr.findIndex(x => x.id === m.id) === i)
                 .map(movie => ({ movie, category: cat }))
         ).filter((item, i, arr) =>
-            // dedup across categories by movie id
             arr.findIndex(x => x.movie.id === item.movie.id) === i
         )
         : [];
@@ -176,8 +162,6 @@ export default function DevChoice() {
         </TouchableOpacity>
     ), [handleMoviePress]);
 
-    // ── Loading / Error states ─────────────────────────────────────────────
-
     if (loading) {
         return (
             <LinearGradient colors={['#09203f', '#0f223a']} style={styles.gradient}>
@@ -202,13 +186,10 @@ export default function DevChoice() {
         );
     }
 
-    // ── Main render ────────────────────────────────────────────────────────
-
     return (
         <LinearGradient colors={['#09203f', '#0f223a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
             <View style={styles.container}>
 
-                {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.headerText}>
                         <Text style={styles.title}>Developer's Picks</Text>
@@ -223,7 +204,6 @@ export default function DevChoice() {
                     </View>
                 </View>
 
-                {/* Search bar — filters categories locally */}
                 <View style={styles.searchBar}>
                     <Text style={styles.searchIcon}>🔍</Text>
                     <TextInput
@@ -244,7 +224,6 @@ export default function DevChoice() {
 
                 <View style={styles.divider} />
 
-                {/* Category list — grid when searching, horizontal rows when browsing */}
                 {filteredCategories.length === 0 ? (
                     <View style={styles.center}>
                         <Text style={styles.noResults}>
@@ -257,7 +236,6 @@ export default function DevChoice() {
                         )}
                     </View>
                 ) : searchQuery.length > 0 ? (
-                    // ── Search mode: vertical 3-column grid ──
                     <>
                         <Text style={styles.gridResultLabel}>
                             {gridItems.length} movie{gridItems.length !== 1 ? 's' : ''} in {filteredCategories.length} categor{filteredCategories.length !== 1 ? 'ies' : 'y'}
@@ -276,7 +254,6 @@ export default function DevChoice() {
                         />
                     </>
                 ) : (
-                    // ── Browse mode: horizontal scroll per category ──
                     <FlatList
                         data={filteredCategories}
                         renderItem={renderCategory}
@@ -293,20 +270,14 @@ export default function DevChoice() {
     );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
     gradient: { flex: 1 },
     container: { flex: 1, paddingTop: 80, paddingHorizontal: 12 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-    // Loading / Error
     loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
     errorText: { color: '#ff4444', fontSize: 16, textAlign: 'center', marginBottom: 20 },
     retryButton: { backgroundColor: '#0486ce', paddingVertical: 12, paddingHorizontal: 25, borderRadius: 14 },
     retryButtonText: { color: '#fff', fontWeight: 'bold' },
-
-    // Header
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
     headerText: { flex: 1, paddingRight: 10 },
     title: { fontSize: 28, fontWeight: 'bold', color: '#fff', letterSpacing: 0.5 },
@@ -319,8 +290,6 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
     },
     icon: { width: 50, height: 50 },
-
-    // Search bar
     searchBar: {
         flexDirection: 'row', alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.06)',
@@ -332,26 +301,16 @@ const styles = StyleSheet.create({
     searchIcon: { fontSize: 16, marginRight: 10 },
     searchInput: { flex: 1, color: '#fff', fontSize: 15 },
     clearBtn: { color: '#778', fontSize: 16, paddingLeft: 8 },
-
-    // Divider
     divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginBottom: 10 },
-
-    // No results
     noResults: { color: '#556', fontSize: 15 },
-
-    // Category header (tappable)
     listContent: { paddingVertical: 10, paddingBottom: 30 },
     categoryCard: { marginBottom: 30 },
     categoryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginLeft: 4 },
     categoryTitle: { fontSize: 19, fontWeight: '700', color: '#fff' },
     categoryChevron: { fontSize: 24, color: '#4a6a88', marginRight: 4 },
-
-    // Movie cards (horizontal browse mode)
     movieCard: { width: 115, marginRight: 14 },
     moviePoster: { width: '100%', height: 170, borderRadius: 14, backgroundColor: '#1a2535' },
     movieTitle: { fontSize: 12, color: '#ccc', marginTop: 7, fontWeight: '500', textAlign: 'center' },
-
-    // Grid (search mode)
     gridResultLabel: { color: '#7a8fa6', fontSize: 13, marginBottom: 10, marginLeft: 2 },
     gridContent: { paddingBottom: 30 },
     gridRow: { justifyContent: 'space-between', marginBottom: 14 },

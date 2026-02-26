@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-// Types for better safety
 interface Movie {
     id: number;
     title: string;
@@ -20,8 +19,6 @@ export default function ResultScreen() {
     const { mood, time, platforms, genres } = useLocalSearchParams();
     const router = useRouter();
 
-    // We use a ref to track shown IDs. This persists across re-renders
-    // and doesn't trigger a re-render when updated, which is perfect for getMovie dependencies.
     const shownMovieIds = useRef<number[]>([]);
 
     const [movie, setMovie] = useState<Movie | null>(null);
@@ -35,13 +32,6 @@ export default function ResultScreen() {
         setImageError(false);
 
         try {
-            console.log("[ResultScreen] Fetching recommendation...", {
-                mood,
-                time,
-                platforms,
-                exclude: shownMovieIds.current
-            });
-
             const response = await axios.post(
                 "https://one-movie-at-a-time.onrender.com/api/movies/recommend",
                 {
@@ -54,10 +44,7 @@ export default function ResultScreen() {
                 { timeout: 30000 }
             );
 
-            console.log("[ResultScreen] Data received:", response.data);
-
             if (response.data && response.data.title) {
-                // Add this movie to our "shown" list so we don't see it again
                 if (response.data.id && !shownMovieIds.current.includes(response.data.id)) {
                     shownMovieIds.current.push(response.data.id);
                 }
@@ -66,7 +53,6 @@ export default function ResultScreen() {
                 setMovie(null);
             }
         } catch (err: any) {
-            console.error("[ResultScreen] API Error:", err.message);
             setError("Failed to connect to the server. Please check your connection.");
         } finally {
             setLoading(false);
@@ -111,10 +97,7 @@ export default function ResultScreen() {
                             style={styles.poster}
                             contentFit="cover"
                             transition={300}
-                            onError={(e) => {
-                                console.warn("[ResultScreen] Image load failed:", movie.poster_url);
-                                setImageError(true);
-                            }}
+                            onError={() => setImageError(true)}
                         />
                     ) : (
                         <View style={[styles.poster, styles.posterFallback]}>

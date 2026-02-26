@@ -42,7 +42,7 @@ export default function ResultScreen() {
             });
 
             const response = await axios.post(
-                "http://172.23.94.21:5000/api/movies/recommend",
+                "https://one-movie-at-a-time.onrender.com/api/movies/recommend",
                 {
                     mood: mood || "Happy",
                     time: parseInt(time as string) || 160,

@@ -74,7 +74,7 @@ const DevChoice = () => {
         const fetchCollections = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get("http://172.23.94.21:5000/api/movies/movie-collections");
+                const response = await axios.get("https://one-movie-at-a-time.onrender.com/api/movies/movie-collections");
                 setCollections(response.data);
                 setError(null);
             } catch (err: any) {

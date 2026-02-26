@@ -1,5 +1,7 @@
 const axios = require("axios");
 
+const TMDB_TIMEOUT = 8000;
+
 const moodToGenreMap = {
   Happy: 35,
   Intense: 28,
@@ -10,7 +12,7 @@ const getRecommendation = async (mood, time, platforms, exclude = []) => {
   try {
     const genreId = moodToGenreMap[mood];
 
-    const response = await axios.get(
+    const discoverRes = await axios.get(
       "https://api.themoviedb.org/3/discover/movie",
       {
         params: {
@@ -18,71 +20,65 @@ const getRecommendation = async (mood, time, platforms, exclude = []) => {
           with_genres: genreId,
           "vote_average.gte": 7,
           "vote_count.gte": 500,
-          page: 1
+          page: 1,
         },
+        timeout: TMDB_TIMEOUT,
       }
     );
 
-    let movies = response.data.results;
-
-    if (!movies || movies.length === 0) {
-      return null;
-    }
-
+    let movies = discoverRes.data.results || [];
+    if (movies.length === 0) return null;
 
     if (exclude.length > 0) {
-      movies = movies.filter(movie => !exclude.includes(movie.id));
+      movies = movies.filter(m => !exclude.includes(m.id));
     }
+    if (movies.length === 0) return null;
 
-    if (movies.length === 0) {
-      return null;
-    }
+    const selected = movies[Math.floor(Math.random() * movies.length)];
 
-    const randomIndex = Math.floor(Math.random() * movies.length);
-    const selectedMovie = movies[randomIndex];
-
-    // Fetch full details for the selected movie to get trailers and runtime
+    // Fetch full details (with videos) for the selected movie
     try {
-      const detailResponse = await axios.get(
-        `https://api.themoviedb.org/3/movie/${selectedMovie.id}`,
+      const detailRes = await axios.get(
+        `https://api.themoviedb.org/3/movie/${selected.id}`,
         {
           params: {
             api_key: process.env.TMDB_API_KEY,
-            append_to_response: "videos"
-          }
+            append_to_response: "videos",
+          },
+          timeout: TMDB_TIMEOUT,
         }
       );
 
-      const movieData = detailResponse.data;
-      const trailers = movieData.videos?.results || [];
-
-      // Priority: Trailer > Teaser > First YouTube Video
-      let trailer = trailers.find(v => v.type === "Trailer" && v.site === "YouTube");
-      if (!trailer) trailer = trailers.find(v => v.type === "Teaser" && v.site === "YouTube");
-      if (!trailer) trailer = trailers.find(v => v.site === "YouTube");
+      const data = detailRes.data;
+      const trailers = data.videos?.results || [];
+      let trailer =
+        trailers.find(v => v.type === "Trailer" && v.site === "YouTube") ||
+        trailers.find(v => v.type === "Teaser" && v.site === "YouTube") ||
+        trailers.find(v => v.site === "YouTube") ||
+        null;
 
       return {
-        id: movieData.id,
-        title: movieData.title,
-        rating: movieData.vote_average,
-        runtime: movieData.runtime || "N/A",
-        genre: movieData.genres?.map(g => g.name).join(", ") || mood,
-        poster_url: `https://image.tmdb.org/t/p/w185${movieData.poster_path}`,
-        overview: movieData.overview,
-        trailer_url: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null
+        id: data.id,
+        title: data.title,
+        rating: data.vote_average,
+        runtime: data.runtime || "N/A",
+        genre: data.genres?.map(g => g.name).join(", ") || mood,
+        poster_url: `https://image.tmdb.org/t/p/w185${data.poster_path}`,
+        overview: data.overview,
+        trailer_url: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null,
       };
-    } catch (detailError) {
-      console.error("Error fetching movie details:", detailError.message);
-      // Fallback to basic info if detail fetch fails
+
+    } catch (detailErr) {
+      console.error("Detail fetch failed, using basic info:", detailErr.message);
       return {
-        id: selectedMovie.id,
-        title: selectedMovie.title,
-        rating: selectedMovie.vote_average,
+        id: selected.id,
+        title: selected.title,
+        rating: selected.vote_average,
         runtime: "N/A",
         genre: mood,
-        poster_url: `https://image.tmdb.org/t/p/w185${selectedMovie.poster_path}`,
-        overview: selectedMovie.overview,
-        trailer_url: null
+        poster_url: `https://image.tmdb.org/t/p/w185${selected.poster_path}`,
+        overview: selected.overview,
+        trailer_url: null,
       };
     }
 
@@ -91,6 +87,5 @@ const getRecommendation = async (mood, time, platforms, exclude = []) => {
     return null;
   }
 };
-
 
 module.exports = { getRecommendation };

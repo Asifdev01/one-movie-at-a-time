@@ -77,11 +77,15 @@ async function buildCollections() {
 
 router.post("/recommend", async (req, res) => {
     try {
-        const { mood, time, platforms, exclude } = req.body;
+        const { mood, time, platforms, exclude, genres } = req.body;
         if (!mood || !time || !platforms) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-        const movie = await getRecommendation(mood, time, platforms, exclude || []);
+        const movie = await getRecommendation(
+            mood, time, platforms,
+            exclude || [],
+            Array.isArray(genres) ? genres : []
+        );
         if (!movie) return res.status(404).json({ message: "No movie found" });
         res.json(movie);
     } catch (error) {

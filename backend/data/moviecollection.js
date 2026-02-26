@@ -2,33 +2,7 @@ const movieCollections = {
     absouluteCinema: [438631, 569094, 299534, 98, 361743, 503314, 10191, 872585, 20453, 161, 24, 1578, 752, 360814],
     calmAndRelaxing: [332835, 976893, 191714, 479918, 122906, 773, 533237],
     mindBlowing: [11423, 27205, 603, 46738, 550, 293670, 25237],
-    indianComedy: [
-        21614,  // Hera Pheri (2000)
-        21184,  // Hungama (2003)
-        12971,  // Golmaal: Fun Unlimited (2006)
-        41188,  // Bhagam Bhag (2006)
-        19636,  // Garam Masala (2005)
-        67066,  // Hulchul (2004)
-        19280,  // Munna Bhai M.B.B.S. (2003)
-        20390,  // No Entry (2005)
-        50749,  // Andaz Apna Apna (1994)
-        170838, // Mr. & Mrs. Khiladi (1997)
-        232032, // Mujhse Shaadi Karogi (2004)
-        161226, // Biwi No.1 (1999)
-        115124, // Awara Paagal Deewana (2002)
-        166871, // Saajan Chale Sasural (1996)
-        852001, // Bunty Aur Babli (2005)
-        177358, // Jolly LLB (2013)
-        24827,  // Ajab Prem Ki Ghazab Kahani (2009)
-        58051,  // Housefull (2010)
-        534780, // Andhadhun (2018)
-        180853, // Chashme Baddoor (2013)
-        1455811,// Khatta Meetha (2010)
-        19077,  // 3 Idiots (2009)
-        20413,  // Dhammal (2007)
-        15217,  // Welcome (2007)
-        27298,  // Partner (2007)
-    ],
+    indianComedy: [21614, 21184, 41188, 19636, 67066, 20390, 170838, 161226, 115124, 166871, 852001, 177358, 58051, 534780, 19077],
     horrorAndChills: [138843, 250546, 493922, 82507, 439079, 1027556, 882598, 9552, 300669, 418078, 157547, 480414, 458723, 21208, 49018, 406563, 345940, 439015, 23827, 723072, 242224],
     actionKings: [155, 94329, 180299, 718930, 245891, 207703, 545609, 414906],
     sadStoriesThatHeal: [84892, 1402, 13, 441717, 38, 28178, 5915, 334541, 150540,],

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -13,10 +13,11 @@ interface Movie {
     rating: number;
     poster_url: string;
     overview: string;
+    trailer_url: string | null;
 }
 
 export default function ResultScreen() {
-    const { mood, time, platforms } = useLocalSearchParams();
+    const { mood, time, platforms, genres } = useLocalSearchParams();
     const router = useRouter();
 
     // We use a ref to track shown IDs. This persists across re-renders
@@ -45,6 +46,7 @@ export default function ResultScreen() {
                 "https://one-movie-at-a-time.onrender.com/api/movies/recommend",
                 {
                     mood: mood || "Happy",
+                    genres: genres ? (genres as string).split(',') : [],
                     time: parseInt(time as string) || 160,
                     platforms: Array.isArray(platforms) ? platforms : [platforms || "Prime"],
                     exclude: shownMovieIds.current
@@ -145,6 +147,16 @@ export default function ResultScreen() {
                         </Text>
                     </View>
                 </View>
+
+                {movie.trailer_url && (
+                    <TouchableOpacity
+                        style={styles.trailerButton}
+                        onPress={() => Linking.openURL(movie.trailer_url!)}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.trailerButtonText}>▶  Watch Trailer</Text>
+                    </TouchableOpacity>
+                )}
 
                 <TouchableOpacity
                     style={styles.button}
@@ -298,10 +310,26 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '800',
     },
-    button: {
+    trailerButton: {
         marginTop: 15,
+        backgroundColor: '#FF6500',
+        paddingVertical: 13,
+        borderRadius: 14,
+        width: '100%',
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    trailerButtonText: {
+        fontWeight: 'bold',
+        fontSize: 15,
+        color: '#fff',
+        letterSpacing: 0.5,
+    },
+    button: {
+        marginTop: 10,
         backgroundColor: "#FFD700",
-        paddingVertical: 12,
+        paddingVertical: 15,
         borderRadius: 14,
         width: '100%',
         alignItems: 'center',
